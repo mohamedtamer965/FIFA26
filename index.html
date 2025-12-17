@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA 26: ULTIMATE EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="lib/three/three.min.js"></script>
+    <script src="lib/three/GLTFLoader.js"></script>
+    <script src="lib/three/OBJLoader.js"></script>
+    <script>
+        // Ensure THREE is loaded before modules
+        if (typeof THREE === 'undefined') {
+            console.error('THREE.js library failed to load');
+        }
+    </script>
+</head>
+<body>
+
+    <!-- HUD / IN-GAME UI -->
+    <div id="ui-layer">
+        <div id="speed-lines"></div>
+        <div id="scoreboard-container">
+            <div class="team-box">
+                <div id="strip-home" class="team-color-strip"></div>
+                <div id="score-home" class="score-val">0</div>
+            </div>
+            <div id="timer-box"><div id="timer">00:00</div></div>
+            <div class="team-box">
+                <div id="strip-away" class="team-color-strip"></div>
+                <div id="score-away" class="score-val">0</div>
+            </div>
+        </div>
+        
+        <!-- ENHANCED TRAINING CONTROLS -->
+        <div id="ball-placer">
+            <div class="panel-header">TRAINING CONTROL</div>
+            
+            <div class="control-group">
+                <div class="ctrl-label">SET PIECE TYPE</div>
+                <div class="btn-row">
+                    <button class="mode-btn active" data-mode="freeKick">Free Kick</button>
+                    <button class="mode-btn" data-mode="corner">Corner</button>
+                    <button class="mode-btn" data-mode="penalty">Penalty</button>
+                    <button class="mode-btn" data-mode="throwIn">Throw In</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="ctrl-label">POSITION</div>
+                <div class="btn-row">
+                    <button class="place-btn" data-loc="left">Left</button>
+                    <button class="place-btn" data-loc="center">Center</button>
+                    <button class="place-btn" data-loc="right">Right</button>
+                </div>
+                <div class="btn-row">
+                    <button class="place-btn" data-loc="close">Short</button>
+                    <button class="place-btn" data-loc="far">Long</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="lbl-stamina" class="hud-label">Turbo</div>
+        <div id="stamina-container" class="hud-bar-box"><div id="stamina-fill" class="bar-fill"></div></div>
+        
+        <div id="lbl-power" class="hud-label">Power</div>
+        <div id="power-container" class="hud-bar-box"><div id="power-fill" class="bar-fill"></div></div>
+
+        <div id="minimap-container"><canvas id="minimap-canvas" width="300" height="150"></canvas></div>
+        
+        <div id="commentary-box">
+            <div id="comm-text">Match ready...</div>
+            <div id="set-piece-indicator">THROW IN</div>
+        </div>
+    </div>
+
+    <!-- 1. MAIN MENU -->
+    <div id="screen-main" class="screen active">
+        <h1>FIFA <span>26</span></h1>
+        <div id="main-menu-container">
+            <div class="main-opt-btn" data-action="mode-match">
+                <div class="opt-icon">⚽</div>
+                <div class="opt-title">Kick Off</div>
+                <div style="color:#888; margin-top:10px; font-weight:700;">Quick Match</div>
+            </div>
+            <div class="main-opt-btn" data-action="mode-training">
+                <div class="opt-icon">🎯</div>
+                <div class="opt-title">Training</div>
+                <div style="color:#888; margin-top:10px; font-weight:700;">Practice Skills</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TEAM SELECT -->
+    <div id="screen-teams" class="screen">
+        <div class="panel-full">
+            <div class="row header-row"><span class="opt-title">SELECT TEAMS</span></div>
+            
+            <div class="team-select-wrapper">
+                <!-- HOME TEAM -->
+                <div class="team-card home">
+                    <div class="team-header">Home Team</div>
+                    <div class="team-content">
+                        <div class="team-name-row">
+                            <div class="nav-arrow" id="btn-prev-home">◄</div>
+                            <div id="sel-home-name" class="team-name">BRAZIL</div>
+                            <div class="nav-arrow" id="btn-next-home">►</div>
+                        </div>
+                        <div id="sel-home-logo" class="team-logo">🇧🇷</div>
+                        <div id="sel-home-stars" class="team-stars">★★★★★</div>
+                        <div class="team-stats">
+                            <div class="stat-box"><div class="stat-label">ATT</div><div id="home-att" class="stat-val stat-high">87</div></div>
+                            <div class="stat-box"><div class="stat-label">MID</div><div id="home-mid" class="stat-val stat-high">85</div></div>
+                            <div class="stat-box"><div class="stat-label">DEF</div><div id="home-def" class="stat-val stat-med">83</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AWAY TEAM -->
+                <div class="team-card away">
+                    <div class="team-header">Away Team</div>
+                    <div class="team-content">
+                        <div class="team-name-row">
+                            <div class="nav-arrow" id="btn-prev-away">◄</div>
+                            <div id="sel-away-name" class="team-name">FRANCE</div>
+                            <div class="nav-arrow" id="btn-next-away">►</div>
+                        </div>
+                        <div id="sel-away-logo" class="team-logo">🇫🇷</div>
+                        <div id="sel-away-stars" class="team-stars">★★★★★</div>
+                        <div class="team-stats">
+                            <div class="stat-box"><div class="stat-label">ATT</div><div id="away-att" class="stat-val stat-high">89</div></div>
+                            <div class="stat-box"><div class="stat-label">MID</div><div id="away-mid" class="stat-val stat-high">86</div></div>
+                            <div class="stat-box"><div class="stat-label">DEF</div><div id="away-def" class="stat-val stat-med">84</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-controls">
+                <button class="btn-small btn-back" data-target="screen-main">BACK</button>
+                <button class="btn" id="btn-to-tactics">NEXT: TACTICS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. TACTICS -->
+    <div id="screen-tactics" class="screen">
+        <div class="panel-center">
+            <h1>TEAM <span>SHEET</span></h1>
+            <div class="row">
+                <span class="label">Formation</span>
+                <select id="formation-select">
+                    <option value="1-2-1">1-2-1 (Diamond)</option>
+                    <option value="2-2">2-2 (Box)</option>
+                    <option value="1-1-2">1-1-2 (Attack)</option>
+                </select>
+            </div>
+            <div id="pitch-viz" class="pitch-viz"></div>
+            
+            <div class="flow-controls">
+                <button class="btn-small btn-back" data-target="screen-teams">BACK</button>
+                <button class="btn" id="btn-to-settings">NEXT: MATCH SETTINGS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. MATCH SETTINGS -->
+    <div id="screen-settings" class="screen">
+        <div class="panel-center" style="width: 600px;">
+            <h1>MATCH <span>SETUP</span></h1>
+            
+            <div class="settings-grid">
+                <!-- Training Specific -->
+                <div class="row" id="row-training-type">
+                    <span class="label">Drill Type</span>
+                    <select id="training-mode">
+                        <option value="free">Free Training (Solo)</option>
+                        <option value="setpiece">Set Piece Practice</option>
+                    </select>
+                </div>
+
+                <div class="row"><span class="label">Weather</span><select id="weather-select"><option value="clear">Clear Sky</option><option value="rain">Heavy Rain</option><option value="snow">Snowstorm</option></select></div>
+                <div class="row"><span class="label">Time of Day</span><select id="time-select"><option value="day">Day Match</option><option value="night">Night Lights</option></select></div>
+                <div class="row"><span class="label">Game Speed</span><select id="speed-select"><option value="0.8">Simulation</option><option value="1.0" selected>Balanced</option><option value="1.3">Hyper Arcade</option></select></div>
+                <div class="row"><span class="label">AI Difficulty</span><select id="diff-select"><option value="0.8">Amateur</option><option value="1.0" selected>Professional</option><option value="1.3">Legendary</option></select></div>
+                <div class="row">
+                    <span class="label">Camera</span>
+                    <select id="cam-select">
+                        <option value="broadcast">TV Broadcast</option>
+                        <option value="dynamic">Dynamic Action</option>
+                        <option value="topdown">Tactical Sky</option>
+                        <option value="firstperson">Pro Cam (First Person)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flow-controls">
+                <button class="btn-small btn-back" data-target="screen-tactics">BACK</button>
+                <button class="btn" id="btn-start-game">KICK OFF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAUSE MENU -->
+    <div id="pause-menu">
+        <div class="pause-content">
+            <h1>PAUSED</h1>
+            <button class="btn" id="btn-resume">RESUME MATCH</button>
+            <button class="btn" id="btn-restart" style="background:#444">RESTART</button>
+            <button class="btn" id="btn-quit" style="background:#ff5555">QUIT TO MAIN MENU</button>
+        </div>
+    </div>
+
+    <div id="game-container"></div>
+
+    <!-- JS MODULES - Loaded after THREE.js is guaranteed available -->
+    <script>
+        // Wait for THREE to be available before loading modules
+        function loadModules() {
+            if (typeof THREE !== 'undefined') {
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = 'js/main.js';
+                document.body.appendChild(script);
+            } else {
+                setTimeout(loadModules, 100);
+            }
+        }
+        loadModules();
+    </script>
+</body>
+</html>
